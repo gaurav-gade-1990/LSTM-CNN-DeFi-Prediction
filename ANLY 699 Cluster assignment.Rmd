@@ -1,0 +1,340 @@
+---
+title: "ANLY 699 Cluster Assignment"
+author: "Gaurav Gade"
+date: "10/24/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+# install.packages("xts")
+# install.packages("dplyr")
+
+
+library(dplyr)
+library(xts)
+library(cluster)
+getwd()
+setwd("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets")
+
+
+
+```
+
+```{r Data preparation, cleaning and normalization}
+#========DATA PREP==========================
+
+    
+#Import data for DeFi Tokens and BTC - BTC, CARDANO, CHAINLINK, POLKADOT, SOLANA
+    
+#Import data for each of the four securities - BTC
+    data.BTC <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/BTC-USD.csv",header=TRUE)
+    date <- as.Date(data.BTC$Date,format="%Y-%m-%d")  
+    data.BTC <- cbind(date, data.BTC[,-1])
+    data.BTC <- data.BTC[order(data.BTC$date),]
+    data.BTC <- xts(data.BTC[,2:7],order.by=data.BTC[,1])
+    names(data.BTC) <- paste(c("BTC.Open","BTC.High","BTC.Low","BTC.Close","BTC.Adjusted","BTC.Volume"))
+    data.BTC[c(1:3,nrow(data.BTC)),]
+
+#Import data for each of the four securities - Cardano
+    data.ADA <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/ADA-USD.csv",header=TRUE)
+    date <- as.Date(data.ADA$Date,format="%Y-%m-%d")  
+    data.ADA <- cbind(date, data.ADA[,-1])
+    data.ADA <- data.ADA[order(data.ADA$date),]
+    data.ADA <- xts(data.ADA[,2:7],order.by=data.ADA[,1])
+    names(data.ADA) <- paste(c("ADA.Open","ADA.High","ADA.Low","ADA.Close","ADA.Adjusted","ADA.Volume"))
+    data.ADA[c(1:3,nrow(data.ADA)),]
+
+#Import data for each of the four securities - ChainLINK (LINK)
+    data.LINK <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/LINK-USD.csv",header=TRUE)
+    date <- as.Date(data.LINK$Date,format="%Y-%m-%d")  
+    data.LINK <- cbind(date, data.LINK[,-1])
+    data.LINK <- data.LINK[order(data.LINK$date),]
+    data.LINK <- xts(data.LINK[,2:7],order.by=data.LINK[,1])
+    names(data.LINK) <- paste(c("LINK.Open","LINK.High","LINK.Low","LINK.Close","LINK.Adjusted","LINK.Volume"))
+    data.LINK[c(1:3,nrow(data.LINK)),]
+
+#Import data for each of the four securities - POLKADOT (DOT)
+    data.DOT <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/DOT1-USD.csv",header=TRUE)
+    date <- as.Date(data.DOT$Date,format="%Y-%m-%d")  
+    data.DOT <- cbind(date, data.DOT[,-1])
+    data.DOT <- data.DOT[order(data.DOT$date),]
+    data.DOT <- xts(data.DOT[,2:7],order.by=data.DOT[,1])
+    names(data.DOT) <- paste(c("DOT.Open","DOT.High","DOT.Low","DOT.Close","DOT.Adjusted","DOT.Volume"))
+    data.DOT[c(1:3,nrow(data.DOT)),]
+    
+#Import data for each of the four securities - SOLANA (SOL)
+    data.SOL <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/SOL1-USD.csv",header=TRUE)
+    date <- as.Date(data.SOL$Date,format="%Y-%m-%d")  
+    data.SOL <- cbind(date, data.SOL[,-1])
+    data.SOL <- data.SOL[order(data.SOL$date),]
+    data.SOL <- xts(data.SOL[,2:7],order.by=data.SOL[,1])
+    names(data.SOL) <- paste(c("SOL.Open","SOL.High","SOL.Low","SOL.Close","SOL.Adjusted","SOL.Volume"))
+    data.SOL[c(1:3,nrow(data.SOL)),]
+    
+    
+    data.ADA <- subset(data.ADA,
+                        index(data.ADA)>"2021-03-31")
+    
+    data.BTC <- subset(data.BTC,
+                        index(data.BTC)>"2021-03-31")
+    
+    data.DOT <- subset(data.DOT,
+                        index(data.DOT)>"2021-03-31")
+    
+    data.LINK <- subset(data.LINK,
+                        index(data.LINK)>"2021-03-31")
+    
+    data.SOL <- subset(data.SOL,
+                        index(data.SOL)>"2021-03-31")
+    
+    
+    
+#Combine Data Into one Data Object
+    Close.Prices <- cbind(data.BTC$BTC.Close, data.ADA$ADA.Close,data.LINK$LINK.Close,data.SOL$SOL.Close, data.DOT$DOT.Close)
+    Close.Prices[c(1:3,nrow(Close.Prices)),]
+
+
+    
+#Convert Data into a data.frame
+    
+    multi.df <- cbind(index(Close.Prices),data.frame(Close.Prices))
+    names(multi.df) <- paste(c("date","BTC","ADA","LINK","DOT","SOL"))
+    rownames(multi.df) <- seq(1,nrow(multi.df),1)
+    multi.df[c(1:3,nrow(multi.df)),]
+
+    
+    multi.df$ADA <- as.numeric(multi.df$ADA)
+    multi.df$BTC <- as.numeric(multi.df$BTC)
+    multi.df$LINK <- as.numeric(multi.df$LINK)
+    multi.df$DOT <- as.numeric(multi.df$DOT)
+    multi.df$SOL <- as.numeric(multi.df$SOL)
+  
+    
+    multi.df <- na.omit(multi.df)
+    
+    
+    #Calculate Normalized Values for Each Security
+#Create an index for each security with values that equal the price of the 	security on each day divided by the security's price on December 31, 	2010.
+
+  
+    
+    
+    multi.df$BTC.idx <- multi.df$BTC/multi.df$BTC[1]
+    multi.df$ADA.idx <- multi.df$ADA/multi.df$ADA[1]
+    multi.df$LINK.idx <- multi.df$LINK/multi.df$LINK[1]
+    multi.df$SOL.idx <- multi.df$SOL/multi.df$SOL[1]
+    multi.df$DOT.idx <- multi.df$DOT/multi.df$DOT[1]
+    
+    options(digits=5)   # this option remains in place until end of session
+    multi.df[c(1:3,nrow(multi.df)),]    
+
+
+
+```
+
+```{r Capital Appreciation, echo=FALSE}
+#################################################    
+    
+#Plot the Capital Appreciation of Each Security
+#For the x variable use date, for y use Qualcomm Index
+
+    
+    multi <- data.ADA[,5]
+    head(multi)
+    multi <- merge(multi,data.BTC[,5])
+    multi <- merge(multi,data.LINK[,5])
+    multi <- merge(multi,data.SOL[,5])
+    multi <- merge(multi,data.DOT[,5])
+    
+    
+    multi[c(1:3,nrow(multi)),]
+#============PLOTS======================
+                
+                    plot(x=multi.df$date,
+                         y=multi.df$BTC.idx,
+                         type="l",
+                         xlab="Date",
+                         ylab="Value of Investment ($)",
+                         col="green",
+                         lty=1,
+                         lwd=1,
+                         ylim = c(-2,6),
+                         main="Value of $1 Investment in
+                         ADA, BTC, LINK, SOL and DOT from 07-2010 - 07-2020")
+                
+                    #Adding the lines for the other 5 securities
+                    
+                       lines(x=multi.df$date,
+                          y=multi.df$ADA.idx,
+                          col="dark green",
+                          lty=1,
+                          lwd=1)
+                    
+                    
+                    lines(x=multi.df$date,
+                          y=multi.df$LINK.idx,
+                          col="dark red",
+                          lty=1,
+                          lwd=1)
+                    
+                    lines(x=multi.df$date,
+                          y=multi.df$DOT.idx,
+                          col="dark blue",
+                          lty=1,
+                          lwd=1)
+                    
+                    lines(x=multi.df$date,
+                          y=multi.df$SOL.idx,
+                          col="blue",
+                          lty=1,
+                          lwd=1)
+                    #Adding a line to denote the starting investment value of $1
+                    
+                    abline(h=1,lty=2,col="black")
+                    
+                    #Adding a legend
+                    legend("topleft",
+                           c("BTC","ADA","LINK","DOT","SOL"),
+                           col=c("dark green","dark red","blue","dark blue"),
+                           lty=c(1,1,1,1,1),
+                           lwd=c(3,3,3,3,3))
+                    
+                  #The plot cuts off the values of some securities.
+                    y.range <- range(multi.df[,6:9])  # find minimum/maximum of all 6 securities
+                    y.range    
+```
+
+K-Means 50pts
+  Find the optimal number of clusters (elbow, gap or silhouette methods). Plot the Figure. 10pts
+  Explain how you decided on the optimal number. 10pts
+  Perform the K-Means cluster analysis. Do not print results. 10pts
+  Visualize cluster. Consider adding Y labels (see reading and practice for code). 10pts
+  Provide your interpretation of the cluster visualization. Does it provide you with additional insights for your data? 10pts
+  
+```{r K-Means}
+
+#K Means Clustering
+
+#Set seed for reproducability
+set.seed(123)
+         
+         df <- multi.df[,-c(1:6)]
+        dft <- t(df)         
+#na.omit(dft)
+
+#measure.dist = dist(dft, method = "euclidean") 
+#change method to maximum or manhattan 
+#measure.dist
+
+```
+## Silhouette
+
+- Using `sapply` calculate the average silhouette distances for 2 to n-1 clusters on only the second cluster analysis.
+
+```{r silhouette}
+##r chunk
+measure.dist = dist(df, method = "euclidean")
+measure.hc = hclust(measure.dist, method = "ward.D2")
+sapply(2:5, #we can run 2 to n-1 clusters 
+function(x) summary( 
+silhouette(cutree(measure.hc, k = x), 
+measure.dist)) #find the widths 
+)
+
+silhouette(cutree(measure.hc, k = 3), 
+measure.dist)
+
+#Determine optimal number of clusters
+set.seed(1234)
+if(!require('factoextra')){install.packages('factoextra')}
+library(factoextra)
+#Elbow method
+fviz_nbclust(df, kmeans, method = "wss", nstart=20)
+
+
+#Silhoutte method
+fviz_nbclust(df, kmeans, method = "silhouette", nstart=20)
+
+
+
+```
+We can infer that the optimal number of clusters for the dataset = 2. 
+
+
+Based on the cluster, we can interpret that Polkadot's stock performance varies from that of the other 4 crypto currencies. 
+
+We observe that in 2021, BTC and SOlana are strongly correlated.
+
+Chain Link is closer to the cluster of BTC and Sol.
+Cardano has largely been moving in a direction that is slightly aligned to the cluster of LINK, BTC and SOL
+but is not correlated significantly with Polkadot.
+
+```{r K-Means2}
+
+#Calculate with final number of clusters
+set.seed(1234)
+kMeansResult = kmeans(df, centers = 2)
+
+#View results
+
+
+#kMeansResult$cluster
+
+
+```
+#Results have intentionally not been printed. Based on the result, we can see that every observation has been assigned to a cluster 1 or 2. 
+
+Hierarchical Cluster
+
+Build hierarchical cluster. Explain what linkage is used (you can try several linkage methods).
+
+Using two different linkage methods, I have built the hierarchical clusters using Ward method and Average linkage.
+I notice similar dendograms being generated.
+
+Plot hierarchical cluster.
+How many clusters do you observe. I notice 2 main clusters. I used cuttree to improve the performance and
+visual appeal.
+
+Interpret the results. Does it provide you with additional insights? 
+
+In the case of hierarchical cluster, we notice similar results to that of K-means. 
+
+
+
+(Make sure to use a proper academic writing style to describe results - see the required book on academic writing)
+
+
+
+
+```{r HClust}
+#Set seed for reproducability
+set.seed(123)
+         
+         df <- multi.df[,-c(1:6)]
+                
+#na.omit(dft)
+
+measure.dist = dist(df, method = "euclidean")
+
+measure.hc = hclust(measure.dist, method = "ward.D2") 
+plot(measure.hc, hang = -1)
+
+clusterCut <- cutree(measure.hc, 2)
+
+#Using a difference Linkage method
+clusters <- hclust(dist(df), method = 'average')
+plot(clusters)
+
+clusterCut <- cutree(clusters, 2)
+
+```
+
+```{r replot}
+##r chunk
+{
+  plot(measure.hc, hang = -1) 
+  rect.hclust(measure.hc, k = 2)
+}
+
+
+```

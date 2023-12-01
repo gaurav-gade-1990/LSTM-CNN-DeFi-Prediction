@@ -1,0 +1,325 @@
+---
+title: "Anly 699 Assignment 4"
+author: "Gaurav Gade"
+date: "10/18/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(modelr)
+
+```
+
+```{r Data preparation, cleaning and normalization}
+#========DATA PREP==========================
+
+    
+#Import data for DeFi Tokens and BTC - BTC, CARDANO, CHAINLINK, POLKADOT, SOLANA
+    
+#Import data for each of the four securities - BTC
+    data.BTC <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/BTC-USD.csv",header=TRUE)
+    date <- as.Date(data.BTC$Date,format="%Y-%m-%d")  
+    data.BTC <- cbind(date, data.BTC[,-1])
+    data.BTC <- data.BTC[order(data.BTC$date),]
+    data.BTC <- xts(data.BTC[,2:7],order.by=data.BTC[,1])
+    names(data.BTC) <- paste(c("BTC.Open","BTC.High","BTC.Low","BTC.Close","BTC.Adjusted","BTC.Volume"))
+    data.BTC[c(1:3,nrow(data.BTC)),]
+
+#Import data for each of the four securities - Cardano
+    data.ADA <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/ADA-USD.csv",header=TRUE)
+    date <- as.Date(data.ADA$Date,format="%Y-%m-%d")  
+    data.ADA <- cbind(date, data.ADA[,-1])
+    data.ADA <- data.ADA[order(data.ADA$date),]
+    data.ADA <- xts(data.ADA[,2:7],order.by=data.ADA[,1])
+    names(data.ADA) <- paste(c("ADA.Open","ADA.High","ADA.Low","ADA.Close","ADA.Adjusted","ADA.Volume"))
+    data.ADA[c(1:3,nrow(data.ADA)),]
+
+#Import data for each of the four securities - ChainLINK (LINK)
+    data.LINK <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/LINK-USD.csv",header=TRUE)
+    date <- as.Date(data.LINK$Date,format="%Y-%m-%d")  
+    data.LINK <- cbind(date, data.LINK[,-1])
+    data.LINK <- data.LINK[order(data.LINK$date),]
+    data.LINK <- xts(data.LINK[,2:7],order.by=data.LINK[,1])
+    names(data.LINK) <- paste(c("LINK.Open","LINK.High","LINK.Low","LINK.Close","LINK.Adjusted","LINK.Volume"))
+    data.LINK[c(1:3,nrow(data.LINK)),]
+
+#Import data for each of the four securities - POLKADOT (DOT)
+    data.DOT <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/DOT1-USD.csv",header=TRUE)
+    date <- as.Date(data.DOT$Date,format="%Y-%m-%d")  
+    data.DOT <- cbind(date, data.DOT[,-1])
+    data.DOT <- data.DOT[order(data.DOT$date),]
+    data.DOT <- xts(data.DOT[,2:7],order.by=data.DOT[,1])
+    names(data.DOT) <- paste(c("DOT.Open","DOT.High","DOT.Low","DOT.Close","DOT.Adjusted","DOT.Volume"))
+    data.DOT[c(1:3,nrow(data.DOT)),]
+    
+#Import data for each of the four securities - SOLANA (SOL)
+    data.SOL <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/SOL1-USD.csv",header=TRUE)
+    date <- as.Date(data.SOL$Date,format="%Y-%m-%d")  
+    data.SOL <- cbind(date, data.SOL[,-1])
+    data.SOL <- data.SOL[order(data.SOL$date),]
+    data.SOL <- xts(data.SOL[,2:7],order.by=data.SOL[,1])
+    names(data.SOL) <- paste(c("SOL.Open","SOL.High","SOL.Low","SOL.Close","SOL.Adjusted","SOL.Volume"))
+    data.SOL[c(1:3,nrow(data.SOL)),]
+    
+    
+    data.ADA <- subset(data.ADA,
+                        index(data.ADA)>"2021-03-31" & index(data.ADA) <"2021-10-23" )
+
+    data.BTC <- subset(data.BTC,
+                        index(data.BTC)>"2021-03-31"  & index(data.BTC) <"2021-10-23")
+
+    data.DOT <- subset(data.DOT,
+                        index(data.DOT)>"2021-03-31"  & index(data.DOT) <"2021-10-23")
+
+    data.LINK <- subset(data.LINK,
+                        index(data.LINK)>"2021-03-31"  & index(data.LINK) <"2021-10-23")
+
+    data.SOL <- subset(data.SOL,
+                        index(data.SOL)>"2021-03-31"  & index(data.SOL) <"2021-10-23")
+
+
+    #summary(data.ADA)
+```   
+
+```{r Combine Data}    
+    #Combine Data Into one Data Object
+    Close.Prices <- cbind(data.BTC$BTC.Close, data.ADA$ADA.Close,data.LINK$LINK.Close,data.SOL$SOL.Close, data.DOT$DOT.Close)
+    Close.Prices[c(1:3,nrow(Close.Prices)),]
+
+
+    
+#Convert Data into a data.frame
+    
+    multi.df <- cbind(index(Close.Prices),data.frame(Close.Prices))
+    names(multi.df) <- paste(c("date","BTC","ADA","LINK","DOT","SOL"))
+    rownames(multi.df) <- seq(1,nrow(multi.df),1)
+    multi.df[c(1:3,nrow(multi.df)),]
+
+    
+    multi.df$ADA <- as.numeric(multi.df$ADA)
+    multi.df$BTC <- as.numeric(multi.df$BTC)
+    multi.df$LINK <- as.numeric(multi.df$LINK)
+    multi.df$DOT <- as.numeric(multi.df$DOT)
+    multi.df$SOL <- as.numeric(multi.df$SOL)
+  
+    
+    multi.df <- na.omit(multi.df)
+    
+    
+    #Calculate Normalized Values for Each Security
+#Create an index for each security with values that equal the price of the 	security on each day divided by the security's price on December 31, 	2010.
+
+  
+    
+    
+    multi.df$BTC.idx <- multi.df$BTC/multi.df$BTC[1]
+    multi.df$ADA.idx <- multi.df$ADA/multi.df$ADA[1]
+    multi.df$LINK.idx <- multi.df$LINK/multi.df$LINK[1]
+    multi.df$SOL.idx <- multi.df$SOL/multi.df$SOL[1]
+    multi.df$DOT.idx <- multi.df$DOT/multi.df$DOT[1]
+    
+    options(digits=5)   # this option remains in place until end of session
+    multi.df[c(1:3,nrow(multi.df)),]    
+
+
+
+```
+
+```{r training & test}
+
+    ADA <- as.data.frame(data.ADA)
+    BTC <- as.data.frame(data.BTC)
+    LINK <- as.data.frame(data.LINK)    
+    DOT <- as.data.frame(data.DOT)    
+    SOL <- as.data.frame(data.SOL)
+    
+    defi <- cbind.data.frame(ADA,BTC, LINK,DOT, SOL)
+    summary(defi)
+    
+    
+    defi.train <- defi 
+    #Dropping volume variable
+    defi.train <- defi.train[-c(6,12,18,24,30)]
+    
+
+    ADA$ADA.Open <- as.numeric(unlist(ADA$ADA.Open))
+    ADA$ADA.High <- as.numeric(unlist(ADA$ADA.High))
+    ADA$ADA.Low <- as.numeric(unlist(ADA$ADA.Low))
+    ADA$ADA.Close <- as.numeric(unlist(ADA$ADA.Close))
+    ADA$ADA.Adjusted <- as.numeric(unlist(ADA$ADA.Adjusted))  
+    
+    BTC$BTC.Open <- as.numeric(unlist(BTC$BTC.Open))
+    BTC$BTC.High <- as.numeric(unlist(BTC$BTC.High))
+    BTC$BTC.Low <- as.numeric(unlist(BTC$BTC.Low))
+    BTC$BTC.Close <- as.numeric(unlist(BTC$BTC.Close))
+    BTC$BTC.Adjusted <- as.numeric(unlist(BTC$BTC.Adjusted)) 
+    
+    LINK$LINK.Open <- as.numeric(unlist(LINK$LINK.Open))
+    LINK$LINK.High <- as.numeric(unlist(LINK$LINK.High))
+    LINK$LINK.Low <- as.numeric(unlist(LINK$LINK.Low))
+    LINK$LINK.Close <- as.numeric(unlist(LINK$LINK.Close))
+    LINK$LINK.Adjusted <- as.numeric(unlist(LINK$LINK.Adjusted)) 
+    
+    DOT$DOT.Open <- as.numeric(unlist(DOT$DOT.Open))
+    DOT$DOT.High <- as.numeric(unlist(DOT$DOT.High))
+    DOT$DOT.Low <- as.numeric(unlist(DOT$DOT.Low))
+    DOT$DOT.Close <- as.numeric(unlist(DOT$DOT.Close))
+    DOT$DOT.Adjusted <- as.numeric(unlist(DOT$DOT.Adjusted)) 
+    
+    SOL$SOL.Open <- as.numeric(unlist(SOL$SOL.Open))
+    SOL$SOL.High <- as.numeric(unlist(SOL$SOL.High))
+    SOL$SOL.Low <- as.numeric(unlist(SOL$SOL.Low))
+    SOL$SOL.Close <- as.numeric(unlist(SOL$SOL.Close))
+    SOL$SOL.Adjusted <- as.numeric(unlist(SOL$SOL.Adjusted)) 
+    
+    defi.train$ADA.Open <- as.numeric(unlist(defi.train$ADA.Open))
+    defi.train$ADA.High <- as.numeric(unlist(defi.train$ADA.High))
+    defi.train$ADA.Low <- as.numeric(unlist(defi.train$ADA.Low))
+    defi.train$ADA.Close <- as.numeric(unlist(defi.train$ADA.Close))
+    defi.train$ADA.Adjusted <- as.numeric(unlist(defi.train$ADA.Adjusted))
+    
+    defi.train$BTC.Open <- as.numeric(unlist(defi.train$BTC.Open))
+    defi.train$BTC.High <- as.numeric(unlist(defi.train$BTC.High))
+    defi.train$BTC.Low <- as.numeric(unlist(defi.train$BTC.Low))
+    defi.train$BTC.Close <- as.numeric(unlist(defi.train$BTC.Close))
+    defi.train$BTC.Adjusted <- as.numeric(unlist(defi.train$BTC.Adjusted))
+    
+    defi.train$LINK.Open <- as.numeric(unlist(defi.train$LINK.Open))
+    defi.train$LINK.High <- as.numeric(unlist(defi.train$LINK.High))
+    defi.train$LINK.Low <- as.numeric(unlist(defi.train$LINK.Low))
+    defi.train$LINK.Close <- as.numeric(unlist(defi.train$LINK.Close))
+    defi.train$LINK.Adjusted <- as.numeric(unlist(defi.train$LINK.Adjusted))
+    
+    defi.train$DOT.Open <- as.numeric(unlist(defi.train$DOT.Open))
+    defi.train$DOT.High <- as.numeric(unlist(defi.train$DOT.High))
+    defi.train$DOT.Low <- as.numeric(unlist(defi.train$DOT.Low))
+    defi.train$DOT.Close <- as.numeric(unlist(defi.train$DOT.Close))
+    defi.train$DOT.Adjusted <- as.numeric(unlist(defi.train$DOT.Adjusted))
+    
+     defi.train$SOL.Open <- as.numeric(unlist(defi.train$SOL.Open))
+    defi.train$SOL.High <- as.numeric(unlist(defi.train$SOL.High))
+    defi.train$SOL.Low <- as.numeric(unlist(defi.train$SOL.Low))
+    defi.train$SOL.Close <- as.numeric(unlist(defi.train$SOL.Close))
+    defi.train$SOL.Adjusted <- as.numeric(unlist(defi.train$SOL.Adjusted))
+    
+    
+    head(defi.train)
+    
+    
+    defi.training <- defi.train[1:165,]
+    defi.test <- defi.training[166:207,]
+
+
+```
+
+
+
+Step 2: Choosing regression method
+
+I am choosing multiple linear regresion for this study based on anecdotal literature studies 
+that showed multiple regressions having slightly better accuracy than time-series.
+As the price prediction (output) is not categorical, logistic regression may not be the best choice.
+Alos, there is no category involved so there is no requirement to create dummy variables
+
+Step 3:Building training and test dataset
+
+As the datasets are in the form of training and test, no need to create a partition.
+However, to demonstrate the code to create the partition, code is as follows:
+
+```{r partition}
+set.seed(12345)
+
+ADA.tr <- ADA[1:165,]
+BTC.tr <- BTC[1:165,]
+
+
+ADA.ts <- ADA[166:207,]
+BTC.ts <- BTC[166:207,]
+
+```
+
+```{r model.ADA}
+# building the logistic regression model
+
+regression.model <- lm(ADA.Close  ~ ADA.Open + ADA.High + ADA.Low + ADA.Adjusted,
+                data = ADA.tr)
+
+summary(regression.model)
+AIC(regression.model)
+#[1] -1695.75
+BIC(regression.model)
+#[1] -1695.75
+```
+In the summary, we can see that the p-value for Volume > 0.05 which is why we can exclude that variable from
+the model. 
+
+Step 6. Predictions
+Make predictions
+
+```{r predict}
+
+lm.pred <- predict(regression.model, ADA.ts, type = "response")
+
+lm.pred
+summary(lm.pred)
+
+
+```
+
+Step 7. Evaluation
+MSE = Mean Square Error MAE = Mean Absolute Error RMSE = Root Mean Square Error R2 = R-square
+
+```{r Eval}
+
+data.frame(
+  R2 = rsquare(regression.model, data = ADA.ts),
+  RMSE = rmse(regression.model, data = ADA.ts),
+  MAE = mae(regression.model, data = ADA.ts),
+  MSE = mse(regression.model, data = ADA.ts)
+)
+
+#outputs:
+# R2 = 0.9989971
+# 
+# RMSE =  0.1352867
+# 
+# MAE = 0.05647035
+# 
+# MSE = 0.01830249
+
+#create scatterplot of data
+plot(ADA.ts$ADA.Close)
+
+plot(regression.model)
+
+```
+
+The MLR model has an r-squared value of 0.9989971, an RMSE of 0.1352867, an MAE of 0.05647035 and an MSE of 0.01830249
+
+
+Step 8. Results
+
+The multiple regression model (MLR) was built on the variables open, low and High for predicting the closing price for Decentralized finance (ChainLink). 
+The regression model has an r2 value of 0.9989971.
+The equation to preidict price is:
+Price(next day) = OPen(-6.962e-01) + High(8.961e-01) + Low(7.944e-01).
+or Price(next day) = -0.6962(Open) + .8961(High) + -.7944 (Low)
+
+As per the visualization, we can see that the model fits the data for most of the predictions. 
+The Q-Q plot is seen to be normal as most of the observations follow the reference line.
+The residual v fitted plot also shows that the predicted values and observed values are a close fit. 
+
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.160e-03  4.144e-03  -0.280    0.780    
+Open        -6.962e-01  1.828e-02 -38.075   <2e-16 ***
+High         8.961e-01  1.761e-02  50.895   <2e-16 ***
+Low          7.944e-01  1.718e-02  46.244   <2e-16 ***

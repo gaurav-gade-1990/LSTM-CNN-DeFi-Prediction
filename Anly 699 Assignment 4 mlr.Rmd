@@ -1,0 +1,150 @@
+---
+title: "Anly 699 Assignment 4"
+author: "Gaurav Gade"
+date: "10/18/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r libraries}
+library(ggplot2)
+library(modelr)
+
+```
+
+```{r data prep}
+
+#Based on 80%  training and 20% test.
+
+train <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/chainlink.train.csv", header = TRUE)
+test <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/chainlink.test.csv", header = TRUE)
+
+```
+
+Step 1: Imputation
+
+```{r}
+#Imputation to treat outliers
+
+#removing the 4 outliers
+
+train <- train[-c(1251,1255,1306,1337),]
+
+#Normalizing the data set is not required at this time
+
+```
+
+Step 2: Choosing regression method
+
+I am choosing multiple linear regresion for this study based on anecdotal literature studies 
+that showed multiple regressions having slightly better accuracy than time-series.
+As the price prediction (output) is not categorical, logistic regression may not be the best choice.
+Alos, there is no category involved so there is no requirement to create dummy variables
+
+Step 3:Building training and test dataset
+
+As the datasets are in the form of training and test, no need to create a partition.
+However, to demonstrate the code to create the partition, code is as follows:
+
+```{r partition}
+set.seed(12345)
+
+# creating indicator for test/train sets
+dataset.link <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/chainlink.csv", header = TRUE)
+n = nrow(dataset.link)
+training_ind <- sample(n, 0.8 * n)
+
+# using above indicator for to create train and test sets
+training_data <- dataset.link[training_ind, ]
+test_data <- dataset.link[-training_ind, ]
+
+summary(training_data)
+
+summary(test_data)
+```
+Step 4. Building Model
+Build your model
+
+```{r model}
+# building the logistic regression model
+regression.model <- lm(Close  ~ Open + High + Low + Volume,
+                data = training_data)
+
+summary(regression.model)
+AIC(regression.model)
+#[1] -1695.75
+BIC(regression.model)
+#[1] -1695.75
+```
+In the summary, we can see that the p-value for Volume > 0.05 which is why we can exclude that variable from
+the model. 
+
+Step 6. Predictions
+Make predictions
+
+```{r predict}
+regression.model <- lm(Close  ~ Open + High + Low, #removing Volume
+                data = training_data)
+lm.pred <- predict(regression.model, test_data, type = "response")
+
+lm.pred
+summary(lm.pred)
+
+
+```
+
+Step 7. Evaluation
+MSE = Mean Square Error MAE = Mean Absolute Error RMSE = Root Mean Square Error R2 = R-square
+
+```{r Eval}
+
+data.frame(
+  R2 = rsquare(regression.model, data = test_data),
+  RMSE = rmse(regression.model, data = test_data),
+  MAE = mae(regression.model, data = test_data),
+  MSE = mse(regression.model, data = test_data)
+)
+
+#outputs:
+# R2 = 0.9989971
+# 
+# RMSE =  0.1352867
+# 
+# MAE = 0.05647035
+# 
+# MSE = 0.01830249
+
+#create scatterplot of data
+plot(test_data$Close)
+
+plot(regression.model)
+
+```
+
+The MLR model has an r-squared value of 0.9989971, an RMSE of 0.1352867, an MAE of 0.05647035 and an MSE of 0.01830249
+
+
+Step 8. Results
+
+The multiple regression model (MLR) was built on the variables open, low and High for predicting the closing price for Decentralized finance (ChainLink). 
+The regression model has an r2 value of 0.9989971.
+The equation to preidict price is:
+Price(next day) = OPen(-6.962e-01) + High(8.961e-01) + Low(7.944e-01).
+or Price(next day) = -0.6962(Open) + .8961(High) + -.7944 (Low)
+
+As per the visualization, we can see that the model fits the data for most of the predictions. 
+The Q-Q plot is seen to be normal as most of the observations follow the reference line.
+The residual v fitted plot also shows that the predicted values and observed values are a close fit. 
+
+
+Coefficients:
+              Estimate Std. Error t value Pr(>|t|)    
+(Intercept) -1.160e-03  4.144e-03  -0.280    0.780    
+Open        -6.962e-01  1.828e-02 -38.075   <2e-16 ***
+High         8.961e-01  1.761e-02  50.895   <2e-16 ***
+Low          7.944e-01  1.718e-02  46.244   <2e-16 ***

@@ -1,0 +1,184 @@
+---
+title: "A699 assignment 1 missing values"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r importLibs, include =FALSE}
+
+library(tidyverse)
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(caret)
+library(rjson)
+library(readxl)
+```
+
+```{r Dataset}
+link = read.csv("C:/Users/nagar/Documents/ANLY 699 final project/chainlink.csv")
+summary(link)
+
+# loading Link data
+data.Link <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/chainlink.train.csv",header=TRUE)
+
+# creating variable date
+date.Link <- as.Date(data.Link$Date,format="%Y-%m-%d")  
+
+# replacing the date variable with the date
+data.Link <- cbind(date.Link, data.Link[,-1])
+
+# sorting data in chronological order  
+data.Link <- data.Link[order(data.Link$date),]
+
+# checking structure of the datasets
+str(data.Link)
+
+# checking class of datasets
+class(data.Link)
+
+# converting the dataset
+data.Link <- xts(data.Link[,2:7],order.by=data.Link[,1])
+
+head(data.Link)
+
+```
+
+```{r visualization}
+#Plot visualization of missing data pattern
+#There are no missing records. Plotting the graph of each column in the dataset 
+#for data exploration purpose.
+
+df <- data.frame(link)
+
+boxplot(df$High)
+boxplot(df$Low)
+boxplot(df$Open)
+boxplot(df$Close)
+boxplot(df$Volume)
+boxplot(df$Market.Cap)
+
+```
+Step 1. Normalization
+Scale or normalize your data. Make sure to apply imputation if needed
+
+```{r Outliers}
+# Lets study the data pattern to notice any outliers
+
+    plot(df$Open ~ df$High, data=df, main="plot for Mean of opening price v highest price")
+    plot(df$Open ~ df$Low, data=df, main="plot for Mean of opening price v Lowest price")
+    plot(df$Open ~ df$Close, data=df, main="plot for Mean of opening price v Closing price")
+    plot(df$Open ~ df$Volume, data=df, main="plot for Mean of opening price v Volume")
+    plot(df$Open ~ df$Market.Cap, data=df, main="plot for Mean of opening price v Marketcap")
+    
+#Using Cook's distance to determine and handle outliers
+
+mod <- lm(df$Close ~ df$Open + df$High + df$Low + df$Volume, data=df)
+cooksd <- cooks.distance(mod)
+plot(cooksd, pch="*", cex = 2, main="Influential Obs by Cooks distance")  
+abline(h = 4*mean(cooksd, na.rm=T), col="red")
+text(x=1:length(cooksd)+1, y=cooksd, labels=ifelse(cooksd>4*mean(cooksd, na.rm=T),names(cooksd),""), col="red")  
+
+
+influential <- as.numeric(names(cooksd)[(cooksd > 4*mean(cooksd, na.rm=T))])  
+# influential row numbers
+head(df[influential, ])  # influential observations.
+
+#Imputation to treat outliers
+
+#removing the 4 outliers
+
+df <- df[-c(1251,1255,1306,1337),]
+
+#Normalize the data set
+
+# normalize the dataset
+clink <- as.data.frame(scale(link[,c(2:7)]))
+head(clink)
+
+```
+Step 2. Choosing a Regression Model.
+Choose a regression model. Explain your choice [linear, logistic, time series regression, stepwise, ridge, lasso] 
+
+I have selected the time series regression model as the chain link data is related to stocks and is in the form
+of a time series. 
+
+
+Step 3. Train/Test Split
+Split your dataset into training/testing sets (e.g. 80/20)
+
+```{r regression model}
+library(caret)
+
+train <- df[c(1:944),]
+
+
+set.seed(175)
+Train <- xts(train[, -1], order.by = as.POSIXct(train$Date)) 
+tsr <- ts(Train[,4], frequency = 365.25,start = c(2013,4,27))
+plot(Train$Close,type='l',lwd = 1.5,col='red', ylim = c(0,10000), main = "Bitcoin Closing Price")
+#checking for trends and seasonality
+dects <- decompose(tsr) #Obtaining the trends and seasonality
+plot(dects)
+
+# creating indicator for test/train sets
+n = nrow(clink)
+training_ind <- sample(n, 0.8 * n)
+
+# using above indicator for to create train and test sets
+training_data <- dataset_norm[training_ind, ]
+test_data <- dataset_norm[-training_ind, ]
+
+summary(training_data)
+preProcValues <- preProcess(df, method = c("center", "scale"))
+
+
+#Step 2. Choosing a Regression Model
+#Choose a regression model. Explain your choice [linear, logistic, time series regression, stepwise, ridge, lasso] - 10pts
+#Step 3. Train/Test Split
+#Split your dataset into training/testing sets (e.g. 80/20) 10pts
+
+library(caret)
+trainIndex <- createDataPartition(y = data$Y, p = .8, 
+                                  list = FALSE, 
+                                  times = 1)
+train.data <- data[ trainIndex,] #80%
+test.data  <- data[-trainIndex,] #20%
+y =     a vector of outcomes
+p =      the percentage of data that goes to training: .8 = 80%
+list = logical should the results be in a list (TRUE) or a matrix (FALSE)
+Step 4. Building Model
+Build your model 10pts
+# Example
+model <- lm(sales ~., data = train.data)
+Step 5. Model Summary
+Print summary and interpret table (see lecture slides). Describe the summary. 10 pts
+Step 6. Predictions
+Make predictions - 10pts
+# Example
+predictions <- predict(model,test.data)
+Step 7. Evaluation
+Evaluate - 20pts
+Use model performance metrics: http://www.sthda.com/english/articles/38-regression-model-validation/158-regression-model-accuracy-metrics-r-square-aic-bic-cp-and-more/ (Links to an external site.)
+MSE = Mean Square Error
+MAE = Mean Absolute Error
+RMSE = Root Mean Square Error
+R2 = R-square
+Example
+data.frame( RMSE = RMSE(predictions, test.data$y),
+R2 = R2(predictions, test.data$y),
+MAE = MAE(predictions, test.data$y),
+MSE = mse(predictions, test.data$y))
+accuracy.png
+
+Logistic regression metrics: https://www.r-bloggers.com/2015/08/evaluating-logistic-regression-models/
+Step 8. Results
+Describe results. 10pts
+Writing
+Spelling, Grammar, Markdown syntax. 10pts 

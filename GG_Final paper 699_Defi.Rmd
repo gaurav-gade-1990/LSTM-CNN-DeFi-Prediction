@@ -1,0 +1,289 @@
+---
+title             : "Predicting volatility and price of Decentralizezd Finance (DeFI)"
+shorttitle        : "Predicting volatility and price of Decentralizezd Finance (DeFI)"
+
+author: 
+  - name          : "Gaurav Gade"
+    affiliation   : "1"
+    
+abstract: |
+  This study reveals a detailed comparison between several statistical and advanced data science model in
+  predicting the price of Decentralized finance toke in addition to Bitcoin. The predictive power of the models
+  is tested using both statistical model and advanced machine learning models while considering the time series,
+  seasonal trends, based on closing prices, market cap and volume. ML techniques were optimized with the
+  addition of variables, layers and using other sophisticated algorithms like Longterm Short term memory.
+
+keywords          : "Defi, Cryptocurrency, Price prediction, Time-series,LSTM"
+bibliography      : ["r-references.bib"]
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : no
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences, include = FALSE}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+Decentralized Finance is a relatively new concept in crypto where users can borrow or lend their tokens in order
+to earn interest or open new position. A majority of research studies and experiments have been conducted on top
+10 cryptocurrencies like Bitcoin and Ethereum. However, there has not been a conclusive study of price 
+prediction for Decentralized Finance tokens which will be the main focus of my research. The techniques and 
+methods that researchers have used to analyze Bitcoin and Ethereum can be expanded to DeFi tokens which is why 
+it is important to perform an in-depth study the results of these models. Accordingly,  have I performed a 
+literature survey of over 30 articles published in established journals to prepare the foundation of my research
+study. 
+
+#   Literature Review
+
+###   Review of traditional statistical methods
+
+ Bayesian Regression and GLM/Random forests can be used to predict the price
+of Bitcoin. [@velankar2018bitcoin]. To run the model, the data need to be segment into consecutive intervals of 
+sizes 180s, 360s and 720s. Then k-means clustering can be applied to determine the best clusters. Using Bayesian
+regression, the second set of prices to calculate the corresponding weights of features can be calculated. Price
+change at a specific time interval for time-series data can be used by running GLM/Random forest on two separate
+time series data to get two linear models which can then be used to predict the price change. The GARCH-MIDAS 
+model allows us to link the daily observations on stock returns with macroeconomic variables, sampled at lower 
+frequencies, to determine the impact on the stock volatility. [@hou2013importance]. Another study used this 
+model for predicting the volatility the crypto market. According to [@fang2020economic], the study provides new 
+evidence about the impact of the volatility in crypto. This paper investigates how the price of cryptocurrency 
+is impacted by NVIX or News based implied volatility. Using the GARCH-MIDAS model, it was noted that NVIX has a 
+significant negative effect on the price. This leads us to believe that investors in Cryptocurrency get affected
+by negative news about crypto. In the paper, [@ma2020cryptocurrency], authors have predicted the accuracy of the
+realized variance of Bitcoin. They concluded that the novel MRS-MIDAS model showed an improved accuracy in the 
+forecasting of the RV of Bitcoin for 2-week and 1 month time intervals. In this paper, [@conrad2018long] have 
+used Long term and Short term volatility to predict Bitcoin volatility. Using the GARCH-MIDAS model, they S&P 
+500 companies realized volatility to have a negative and highly significant effect on Bitcoin. S&P 500 risk 
+volatility had positive effect on Bit coin’s volatility that can be used to improve long-term forecasts. Per 
+[@chen2020bitcoin]), it is possible to predict Bitcoin price using traditional statistical methods like 
+Regressions and LDA. However, the study included ML algorithms and based on the results, the researchers
+concluded that highly specialized ML techniques were better at performing price prediction. Lastly, the paper - 
+[@caporale2019day] studied the effect of certain days in cryptocurrency using traditional statistical tests 
+including Student’s t-test, ANOVA, Kruskal-Wallis and regression. The result determined that for Bitcoin, 
+Mondays are statistically likely to provide higher returns than other days of the week. No effect was present 
+for other cryptocurrency
+
+###   Review of sophisticated algorithms like ML and Neural networks
+
+  According to [@chen2020bitcoin]), we can analyze crypto stocks using ML methods like random forests, XGBoost, 
+Quadratic LDA, and SVM by using high-dimension features including property, network, trading, market, attention 
+and gold spot price.
+The Logistic Regression and Linear Discriminant Analysis for Bitcoin daily price prediction with
+high-dimensional features achieved an accuracy of 66 while achieved 67.2% accuracy for the ML methods.
+Based on the findings, statistical methods proved to be an easy way to analyze time-series data. However, there 
+are other algorithms that outperformed these traditional methods. Since, the data used to analyze cryptocurrency
+is in the form of time-series, I researched articles that used the time-series model to predict prices. 
+[@kumar2020predicting] has predicted the trends of price for Ethereum based on deep learning techniques 
+particularly time-series. 
+ARIMA model was found to be one of the easiest and effective machine learning algorithms where time-series data 
+is involved. [@ji2019comparative] However, ARIMA model for BTC price prediction resulted in large MSE values. 
+It can be used for price prediction in sub-periods of the timespan by dividing the timespan over smaller 
+subsets. Deep learning techniques such as multi-layer perceptron (MLP) & long short-term memory (LSTM) can 
+help in predicting the price trends of Ethereum. Before building complex models, it is worth-while to check 
+whether the inbuilt models available in Python and R libraries could be used for the prediction. Scikitlearn and
+Keras libraries have powerful in-built methods for price prediction of Bitcoin at 1 minute intervals. In 
+Sci-kit, the ‘Theil-Sen Regression’ method and ‘Huber Regression’ method had a MSE of 0.000375 and 0.000373 
+respectively while the R2 was 99.2%.  [@phaladisailoed2018machine]. For deep learning based regression models, 
+Keras library can be used to create LSTM and GRU models with MSE  0.000431 and 0.00002 respectively. The R2 was 
+99.2% in both cases.  [@phaladisailoed2018machine]. Hence, we can utilize these methods to effectively predict 
+prices. Several research papers have used neural networks for prediction. Per [@sin2017bitcoin] ANN can be used 
+to predict next day price movement (positive or negative) of Bitcoin with an accuracy of 64%. The paper explores
+the relationship between the features of Bitcoin and the next day change in the price of Bitcoin using an 
+Artificial Neural Network ensemble approach called Genetic Algorithm based Selective Neural Network Ensemble 
+using 5 Multi-Layered Perceptron (MLP). [@azari2019bitcoin] has used time-series data to develop neural networks
+like recurrent neural networks, convolutional neural networks, and autoregressive integrated moving average 
+(ARIMA) to develop a predictive model for Bitcoin price. RNN’s were found to significantly outperform ARIMA in 
+predictive accuracy. However, according to a majority of articles, it seems that the LSTM models from machine 
+learning were most effective in price prediction. Per experimental results conducted by [@ji2019comparative] 
+LSTM-based prediction models slightly outperformed the other prediction models for regression problems, 
+DNN-based prediction models performed the best for classification problems. Per [@dutta2020gated], Sequence 
+model can be applied with a ﬁxed set of exogenous and endogenous factors for forecasting future crypto prices. 
+The ML models like RNN and LSTM have been known to preform better than traditional time-series models. 
+[@dutta2020gated]. [@patel2020deep] Utilizes LSTM (Long term Short term memory) a, Gated recurrent unit and 
+Neural networks to predict crypto prices specifically Lite coin and Monero. The algorithm was able to predict 
+with a high degree of accuracy the prices of these two currencies. Per [@pant2018recurrent] tweets related to 
+Bitcoin can be fed to RNN model along with historical price to predict the price for next time frame. The 
+accuracy for sentiment classification of tweets in two class positive and negative is found to be 81.39 % and 
+the overall price prediction accuracy using RNN is found to be 77.62%.  Per [@jay2020stochastic] we can utilize 
+a neural network model for the prediction of cryptocurrency. By using a layer based model for the observed 
+feature activation of neural network to simulate the market volatility. The model used was MLP (multi-layer 
+perceptron) and Long-term short memory. These models showed an improved accuracy than deterministic models to 
+predict the price of 3 major currencies like Bitcoin, Ethereum and Lite coin. In [@sebastiao2021forecasting], 
+researchers were able to develop strong and flexible techniques to discover predictability of major 
+cryptocurrencies and formulate profitable trading strategies by using samples during the ‘bear’ market. The 
+trading strategies were developed using the machine learning models and were validated and tested during the 
+market fluctuations allowing the study to have an inference of its true predictions between the validation and 
+test period. The success rates of individual machine learning models and the conclusive positive results with an
+achievable performance of major cryptocurrencies using model assembling have helped support the study.
+
+###   Review of sentiment analysis of twitter and other social media platforms
+  
+  According to the research conducted in [@abraham2018cryptocurrency], Google Trends and tweet 
+volume were found to be highly correlated with price. When prices are falling twitter sentiment is not be an 
+effective indicator.  Based on the research in [@stenqvist2017predicting], VADER (Valence Aware Dictionary and 
+Sentiment Reasoner) using Random Forest regression can be used to predict twitter sentiment and to identify 
+relationships between different kinds of input. Twitter sentiments can be used in real-time for crypto price 
+prediction. Using a Spark based architecture that can handle large volume of data, sentiment analysis can be 
+performed in real-time to build and utilize a predictive model that can adjust the weights to accurately provide
+timely insights that can be used to make a decision. [@mohapatra2019kryptooracle]. Another paper - 
+[@misnik2018neural] estimates the price of Bitcoin using market data by analyzing social and time factors. 
+Multilayer perceptron was used along with LSTM neural networks. For time-series, LSTM was considered to be the 
+best approach. (Misnik, (2018)).  News and Social media can be used to effectively predict the price 
+fluctuations of Bitcoin, Lite coin and Ethereum. According to [@lamon2017cryptocurrency], the study utilizes 
+traditional supervised learning algorithms for text based classification. Daily news and social media data was 
+labelled based on price fluctuations. That way price fluctuation can be predicted without having to first 
+predict the sentiment. The model can be used to predict the largest % increase or decrease for Bitcoin and 
+Ethereum.  Per [@wolk2020advanced] tweet frequency had a high inverse correlation with crypto prices. Bad news 
+especially caused an increase in post/tweet frequency. The study looks at price prediction for crypto currency 
+using SVM, SGD, GBM, MLP Neural network, Least squares linear regression, ADAboost and Bayesian Ridge 
+Regression, Decision Tree and ElasticNet. A hybrid model built on the mean of all the models was used to make 
+the final prediction. In this article [@nizzoli2020charting] have discussed about the manipulation of 
+cryptocurrencies by influencers like Twitter, Telegram and Discord and how topic modeling techniques were used 
+to detect the fraud schemes. Major data set of messages was used as samples to find the sham schemes categorized
+in 2 sets ‘pump and dump’ and ‘Ponzi’ majorly inclining towards Telegram accounting to 20% of the total 
+channels. In addition to this, out of total shared Twitter invite links for bot detection 93% were pointing to 
+Telegram channels. The researcher predicts to fight this manipulation and cryptocurrency price abuse by using 
+such records. [@kraaijeveld2020predictive] used sentiment analysis approach to predict the price returns of 
+largest cryptocurrencies. He has discussed about Twitter sentiment being used, along with financial data and 
+granger-causality testing to predict the bullishness ratio and thus find the predictive power for some 
+cryptocurrencies. Moreover this approach also led to findings of at least 1-14% of obtained tweets tweeted by 
+‘bot’ accounts on Twitter.
+
+###   Review of Volatility of price and fluctuation
+  
+  Several studies focused on predicting the volatility rather than price movement. The reason is that volatility
+  based on the direction of price movement could result in huge gains or losses. In order to optimize the 
+portfolio for risk mitigation, it is important to understand how volatile the market it. In this research paper,
+[@catania2018predicting] have studied the conditional volatility for Bitcoin, Ethereum, Lite coin and Ripple. 
+They determined that the volatility in the crypto market was found to be similar in price movement to other 
+financial time-series like foreign exchange returns. They were able to determine the effect of accounting for 
+long-memory in the volatility process.  In another study by [@yi2018volatility], researchers attempted to study 
+the correlation of cryptocurrencies using static and dynamic volatility connectedness. The technique used was 
+LASSO-VAR for estimation. 52 cryptocurrencies were found to be tightly interconnected. Finally, in the article, 
+[@walther2019exogenous], the researchers have used a mixed data sampling approach to forecast the volatility of 
+highly capitalized cryptocurrencies and its index. They have discussed the external factors driving this 
+volatility major being Global Real Economic Activity factor which has been proved effective for the market 
+fluctuations. Moreover, the derived low loss functions due to average forecasting shows us that the factors are 
+time varying and that the model averaging approach broadens the impact of single driving factors.
+
+###   Review of DEFI - decentralized finance 
+  
+  DEFI is a new way of borrowing or lending money in crypto without having to go to traditional banking methods 
+like banks, brokerages or exchanges. DeFI can also provide good returns on investment. However, the DEFI space 
+is still in its infancy and susceptible to risks. In the article, [@gudgeon2020decentralized], researchers 
+identify two weaknesses in DeFi protocols that are susceptible to price abuse in Crypto. First being over 
+collateralization, author discusses how DeFi lending protocols’ flexibility be measured during the fall of its 
+assets and show the speed at which DeFi protocol would become under Collateralized. Second being a governance 
+attack, the author discusses how attacker is able to steal all the collateral. In this paper, [@corbet2021defi] 
+Found out strong correlation between Bitcoin and DeFi tokens. Ethereum or Bitcoin do not cause bubbles in the 
+DeFi market according to their research. Mainly, the cryptocurrency Chain link and Maker are the main drivers. 
+Therefore, while perform price predictions on DeFi, they suggest treating DeFi tokens as separate asset classes.
+
+#   Methods
+
+  In this study, the main topic is to analyze DeFi cryptocurrency. I started with statistical 
+modeling tests on the top 4 Decentralized Finance tokens - ADA, SOL, LINK and DOT in addition to Bitcoin. Based 
+on the literature survey, it is evident that neural networks and Machine Learning algorithms like long-term 
+short-term memory models outperform other techniques to analyze crypto market. In addition to build these 
+models, I used time-series modeling and built random forest for the the purpose of forecasting. 
+I used in-built functions and libraries from R as well as some core libraries like Keras and Tensorflow as these
+have proved to be extremely effective in price prediction and 
+easy to build and manage. [@phaladisailoed2018machine]. In addition to the time-series data, LSTM neural 
+networks was implemented using recurrent neural network algorithm. For data preparation, the historic datasets 
+available from sources like Yahoo finance or Coinmarketcap were converted to time-series data for processing. 
+Iformation without proper actionable insights is not that effective. Therefore, I will be using data 
+visualizations to showcase DEFI prices and predicted values. 
+I have performed a comparative evaluation of the result 
+
+#    Participants
+  The main requirement for my analysis is crypto stock data and twitter data scraped from the internet. Based on
+  the time-series data available, I can run my predictive models. In addition, the neural networks like 
+convolutional neural network, recurrent neural network are memory intensive programs that may require processing
+power of a higher magnitude to run in a reasonable amount of time. I am therefore planning to use resources like
+cloud (Microsoft Azure or Amazon AWS). This will ensure that I can scale my program and deal with large 
+datasets. 
+
+#   Procedures
+  The study would start with statistical modeling tests on Defi tokens like DOT, ADA, SOL and LINK. Since 
+this is time-series data, I ran time forecasting methods. Then, I have built  a LSTM neural network to perform a
+basic crypto price  prediction. I used in-built functions and libraries from Keras and Sci-kit in Python. 
+Then I would be plotting and developing proper visualization of the Defi prices. 
+
+#   Material
+  To build this solution, I will be utilizing Keras, Sci-kit and Tensorflow libraries,
+  Long-Term Short memory and Neural networks like CNN, RNN.  ARIMA, Random Forest and other time-series 
+  forecasting models were used.
+
+#   Measures
+
+  For time-series modeling, the study will use measures like Autocorrelation values, partial autocorrelation, 
+and forecasting accuracy using measures like MAPE to determine effectiveness.
+For LSTM and machine learning algorithms, I will be using a split dataset for validation. Accuracy of the model 
+will be used to determine the best performing model. 
+
+#   Data analysis
+
+  For running the time-series, the following analysis steps were performed: 
+  1.    Plotting the autocorrelation to see if there are many lags in the time series. 
+  2.    Creating validation test-datasets. Using time-intervals to capture maximum variance and volatility. 
+  3.    Building ARIMA and SARIMA model for price prediction. 
+  4.    Running Random Forests
+
+  For LSTM, I performed following steps:
+  1.    Create training and test values, scaling data and assigning training values	
+	2.    Create the model with appropriate parameters like optimizers, epochs
+	3.    Fit the model to the training data
+	4.    Assign test and predicted values and then plotting the results
+
+  For PCA, I have perfomed following steps:
+  1.    Building the covariance matrix using pearson co-efficent on the data
+  2.    Using the princomp function to build the PCA model
+  
+  For Cluster Analysis, I have performed the following steps:
+  1.    Find optimal number of clusters using elbow method 
+  1.    calculate the average silhouette distances for 2 to n-1 clusters 
+  3.    Perform the K-Means cluster analysis
+  4.    Visualize cluster
+  5.    Build hierarchical cluster
+
+
+
+#   Results
+
+#   Analysis
+
+##    Exploratory Data Analysis
+
+`render(input = "C:/Users/nagar/Documents/ANLY 699 final project/ANLY 699 Time Series [26 Nov 2021].rmd", output_format = "pdf_document")`
+
+1. Import data for DeFi Tokens and BTC - BTC, CARDANO, CHAINLINK, POLKADOT, SOLANA
+
+    
+
+I used `r cite_r("r-references.bib")` for all the analysis.
+
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup

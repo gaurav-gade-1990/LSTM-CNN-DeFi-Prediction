@@ -1,0 +1,724 @@
+---
+title: "ANLY 699"
+author: "Gaurav Gade"
+date: "11/18/2021"
+output:
+  word_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+# install.packages("xts")
+# install.packages("dplyr")
+
+
+library(dplyr)
+library(xts)
+library(cluster)
+getwd()
+setwd("C:/Users/nagar/Documents/ANLY 699 final project")
+
+
+
+```
+
+```{r Data preparation, cleaning and normalization}
+#========DATA PREP==========================
+
+    
+#Import data for DeFi Tokens and BTC - BTC, CARDANO, CHAINLINK, POLKADOT, SOLANA
+    
+#Import data for each of the four securities - BTC
+    data.BTC <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/BTC-USD.csv",header=TRUE)
+    date <- as.Date(data.BTC$Date,format="%Y-%m-%d")  
+    data.BTC <- cbind(date, data.BTC[,-1])
+    data.BTC <- data.BTC[order(data.BTC$date),]
+    data.BTC <- xts(data.BTC[,2:7],order.by=data.BTC[,1])
+    names(data.BTC) <- paste(c("BTC.Open","BTC.High","BTC.Low","BTC.Close","BTC.Adjusted","BTC.Volume"))
+    data.BTC[c(1:3,nrow(data.BTC)),]
+
+#Import data for each of the four securities - Cardano
+    data.ADA <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/ADA-USD.csv",header=TRUE)
+    date <- as.Date(data.ADA$Date,format="%Y-%m-%d")  
+    data.ADA <- cbind(date, data.ADA[,-1])
+    data.ADA <- data.ADA[order(data.ADA$date),]
+    data.ADA <- xts(data.ADA[,2:7],order.by=data.ADA[,1])
+    names(data.ADA) <- paste(c("ADA.Open","ADA.High","ADA.Low","ADA.Close","ADA.Adjusted","ADA.Volume"))
+    data.ADA[c(1:3,nrow(data.ADA)),]
+
+#Import data for each of the four securities - ChainLINK (LINK)
+    data.LINK <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/LINK-USD.csv",header=TRUE)
+    date <- as.Date(data.LINK$Date,format="%Y-%m-%d")  
+    data.LINK <- cbind(date, data.LINK[,-1])
+    data.LINK <- data.LINK[order(data.LINK$date),]
+    data.LINK <- xts(data.LINK[,2:7],order.by=data.LINK[,1])
+    names(data.LINK) <- paste(c("LINK.Open","LINK.High","LINK.Low","LINK.Close","LINK.Adjusted","LINK.Volume"))
+    data.LINK[c(1:3,nrow(data.LINK)),]
+
+#Import data for each of the four securities - POLKADOT (DOT)
+    data.DOT <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/DOT1-USD.csv",header=TRUE)
+    date <- as.Date(data.DOT$Date,format="%Y-%m-%d")  
+    data.DOT <- cbind(date, data.DOT[,-1])
+    data.DOT <- data.DOT[order(data.DOT$date),]
+    data.DOT <- xts(data.DOT[,2:7],order.by=data.DOT[,1])
+    names(data.DOT) <- paste(c("DOT.Open","DOT.High","DOT.Low","DOT.Close","DOT.Adjusted","DOT.Volume"))
+    data.DOT[c(1:3,nrow(data.DOT)),]
+    
+#Import data for each of the four securities - SOLANA (SOL)
+    data.SOL <- read.csv("C:/Users/nagar/Documents/ANLY 699 final project/Defi Datasets/SOL1-USD.csv",header=TRUE)
+    date <- as.Date(data.SOL$Date,format="%Y-%m-%d")  
+    data.SOL <- cbind(date, data.SOL[,-1])
+    data.SOL <- data.SOL[order(data.SOL$date),]
+    data.SOL <- xts(data.SOL[,2:7],order.by=data.SOL[,1])
+    names(data.SOL) <- paste(c("SOL.Open","SOL.High","SOL.Low","SOL.Close","SOL.Adjusted","SOL.Volume"))
+    data.SOL[c(1:3,nrow(data.SOL)),]
+    
+    
+    data.ADA <- subset(data.ADA,
+                        index(data.ADA)>"2021-03-31" & index(data.ADA) <"2021-10-23" )
+
+    data.BTC <- subset(data.BTC,
+                        index(data.BTC)>"2021-03-31"  & index(data.BTC) <"2021-10-23")
+
+    data.DOT <- subset(data.DOT,
+                        index(data.DOT)>"2021-03-31"  & index(data.DOT) <"2021-10-23")
+
+    data.LINK <- subset(data.LINK,
+                        index(data.LINK)>"2021-03-31"  & index(data.LINK) <"2021-10-23")
+
+    data.SOL <- subset(data.SOL,
+                        index(data.SOL)>"2021-03-31"  & index(data.SOL) <"2021-10-23")
+
+
+    #summary(data.ADA)
+```    
+    
+```{r COmbine Data}    
+    #Combine Data Into one Data Object
+    Close.Prices <- cbind(data.BTC$BTC.Close, data.ADA$ADA.Close,data.LINK$LINK.Close,data.SOL$SOL.Close, data.DOT$DOT.Close)
+    Close.Prices[c(1:3,nrow(Close.Prices)),]
+
+
+    
+#Convert Data into a data.frame
+    
+    multi.df <- cbind(index(Close.Prices),data.frame(Close.Prices))
+    names(multi.df) <- paste(c("date","BTC","ADA","LINK","DOT","SOL"))
+    rownames(multi.df) <- seq(1,nrow(multi.df),1)
+    multi.df[c(1:3,nrow(multi.df)),]
+
+    
+    multi.df$ADA <- as.numeric(multi.df$ADA)
+    multi.df$BTC <- as.numeric(multi.df$BTC)
+    multi.df$LINK <- as.numeric(multi.df$LINK)
+    multi.df$DOT <- as.numeric(multi.df$DOT)
+    multi.df$SOL <- as.numeric(multi.df$SOL)
+  
+    
+    multi.df <- na.omit(multi.df)
+    
+    
+    #Calculate Normalized Values for Each Security
+#Create an index for each security with values that equal the price of the 	security on each day divided by the security's price on December 31, 	2010.
+
+  
+    
+    
+    multi.df$BTC.idx <- multi.df$BTC/multi.df$BTC[1]
+    multi.df$ADA.idx <- multi.df$ADA/multi.df$ADA[1]
+    multi.df$LINK.idx <- multi.df$LINK/multi.df$LINK[1]
+    multi.df$SOL.idx <- multi.df$SOL/multi.df$SOL[1]
+    multi.df$DOT.idx <- multi.df$DOT/multi.df$DOT[1]
+    
+    options(digits=5)   # this option remains in place until end of session
+    multi.df[c(1:3,nrow(multi.df)),]    
+
+
+
+```
+
+```{r training & test}
+
+    ADA <- as.data.frame(data.ADA)
+    BTC <- as.data.frame(data.BTC)
+    LINK <- as.data.frame(data.LINK)    
+    DOT <- as.data.frame(data.DOT)    
+    SOL <- as.data.frame(data.SOL)
+    
+    defi <- cbind.data.frame(ADA,BTC, LINK,DOT, SOL)
+    summary(defi)
+    
+    
+    defi.train <- defi 
+    #Dropping volume variable
+    defi.train <- defi.train[-c(6,12,18,24,30)]
+    
+
+    ADA$ADA.Open <- as.numeric(unlist(ADA$ADA.Open))
+    ADA$ADA.High <- as.numeric(unlist(ADA$ADA.High))
+    ADA$ADA.Low <- as.numeric(unlist(ADA$ADA.Low))
+    ADA$ADA.Close <- as.numeric(unlist(ADA$ADA.Close))
+    ADA$ADA.Adjusted <- as.numeric(unlist(ADA$ADA.Adjusted))  
+    
+    BTC$BTC.Open <- as.numeric(unlist(BTC$BTC.Open))
+    BTC$BTC.High <- as.numeric(unlist(BTC$BTC.High))
+    BTC$BTC.Low <- as.numeric(unlist(BTC$BTC.Low))
+    BTC$BTC.Close <- as.numeric(unlist(BTC$BTC.Close))
+    BTC$BTC.Adjusted <- as.numeric(unlist(BTC$BTC.Adjusted)) 
+    
+    LINK$LINK.Open <- as.numeric(unlist(LINK$LINK.Open))
+    LINK$LINK.High <- as.numeric(unlist(LINK$LINK.High))
+    LINK$LINK.Low <- as.numeric(unlist(LINK$LINK.Low))
+    LINK$LINK.Close <- as.numeric(unlist(LINK$LINK.Close))
+    LINK$LINK.Adjusted <- as.numeric(unlist(LINK$LINK.Adjusted)) 
+    
+    DOT$DOT.Open <- as.numeric(unlist(DOT$DOT.Open))
+    DOT$DOT.High <- as.numeric(unlist(DOT$DOT.High))
+    DOT$DOT.Low <- as.numeric(unlist(DOT$DOT.Low))
+    DOT$DOT.Close <- as.numeric(unlist(DOT$DOT.Close))
+    DOT$DOT.Adjusted <- as.numeric(unlist(DOT$DOT.Adjusted)) 
+    
+    SOL$SOL.Open <- as.numeric(unlist(SOL$SOL.Open))
+    SOL$SOL.High <- as.numeric(unlist(SOL$SOL.High))
+    SOL$SOL.Low <- as.numeric(unlist(SOL$SOL.Low))
+    SOL$SOL.Close <- as.numeric(unlist(SOL$SOL.Close))
+    SOL$SOL.Adjusted <- as.numeric(unlist(SOL$SOL.Adjusted)) 
+    
+    defi.train$ADA.Open <- as.numeric(unlist(defi.train$ADA.Open))
+    defi.train$ADA.High <- as.numeric(unlist(defi.train$ADA.High))
+    defi.train$ADA.Low <- as.numeric(unlist(defi.train$ADA.Low))
+    defi.train$ADA.Close <- as.numeric(unlist(defi.train$ADA.Close))
+    defi.train$ADA.Adjusted <- as.numeric(unlist(defi.train$ADA.Adjusted))
+    
+    defi.train$BTC.Open <- as.numeric(unlist(defi.train$BTC.Open))
+    defi.train$BTC.High <- as.numeric(unlist(defi.train$BTC.High))
+    defi.train$BTC.Low <- as.numeric(unlist(defi.train$BTC.Low))
+    defi.train$BTC.Close <- as.numeric(unlist(defi.train$BTC.Close))
+    defi.train$BTC.Adjusted <- as.numeric(unlist(defi.train$BTC.Adjusted))
+    
+    defi.train$LINK.Open <- as.numeric(unlist(defi.train$LINK.Open))
+    defi.train$LINK.High <- as.numeric(unlist(defi.train$LINK.High))
+    defi.train$LINK.Low <- as.numeric(unlist(defi.train$LINK.Low))
+    defi.train$LINK.Close <- as.numeric(unlist(defi.train$LINK.Close))
+    defi.train$LINK.Adjusted <- as.numeric(unlist(defi.train$LINK.Adjusted))
+    
+    defi.train$DOT.Open <- as.numeric(unlist(defi.train$DOT.Open))
+    defi.train$DOT.High <- as.numeric(unlist(defi.train$DOT.High))
+    defi.train$DOT.Low <- as.numeric(unlist(defi.train$DOT.Low))
+    defi.train$DOT.Close <- as.numeric(unlist(defi.train$DOT.Close))
+    defi.train$DOT.Adjusted <- as.numeric(unlist(defi.train$DOT.Adjusted))
+    
+     defi.train$SOL.Open <- as.numeric(unlist(defi.train$SOL.Open))
+    defi.train$SOL.High <- as.numeric(unlist(defi.train$SOL.High))
+    defi.train$SOL.Low <- as.numeric(unlist(defi.train$SOL.Low))
+    defi.train$SOL.Close <- as.numeric(unlist(defi.train$SOL.Close))
+    defi.train$SOL.Adjusted <- as.numeric(unlist(defi.train$SOL.Adjusted))
+    
+    
+    head(defi.train)
+    
+    
+    defi.training <- defi.train[1:165,]
+    defi.test <- defi.training[166:207,]
+
+
+```
+Random forest / Times series for Cardano ADA
+
+```{r Time Series ADA}
+library(plyr)
+library(readr)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(repr)
+library(data.table)
+library(TTR)
+library(forecast)
+library(lubridate)
+library(tidyverse)
+
+
+glimpse(data.ADA)
+
+data.ADA$year = lubridate::year(index(data.ADA))
+data.ADA$yday = yday(index(data.ADA))
+data.ADA$quarter = quarter(index(data.ADA))
+data.ADA$month = lubridate::month(index(data.ADA))
+data.ADA$day = lubridate::day(index(data.ADA))
+
+glimpse(data.ADA)
+
+
+set.seed(100) 
+
+train.data.ADA = data.ADA[1:165,]
+test.data.ADA = data.ADA[166:205,]
+
+mape <- function(actual,pred){
+  mape <- mean(abs((actual - pred)/actual))*100
+  return (mape)
+}
+
+set.seed(100)
+
+library(randomForest)
+#data.ADA <- na.omit(data.ADA)
+
+
+train.data.ADA <- data.ADA[1:165,]
+test.data.ADA <- data.ADA[166:205,]   
+    
+rf = randomForest( ADA.Close~  ADA.Open + ADA.High + ADA.Low + ADA.Adjusted + year + yday + quarter + month + day, data = train.data.ADA)
+
+print(rf)
+
+
+plot(rf)
+varImpPlot(rf, sort = TRUE, n.var = min(10, nrow(rf$importance)),scale = TRUE)
+
+#Predictions
+
+predictions = predict(rf, newdata = train.data.ADA)
+plot(predictions)
+
+mape(train.data.ADA$ADA.Close, predictions) 
+
+
+predictions = predict(rf, newdata = test.data.ADA)
+mape(test.data.ADA$ADA.Close, predictions)
+
+Acf(
+  train.data.ADA$ADA.Close,
+  lag.max = NULL,
+  type = c("correlation", "covariance", "partial"),
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE
+)
+Pacf(
+  train.data.ADA$ADA.Close,
+  lag.max = NULL,
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE...
+)
+
+data.ts <- as.ts(train.data.ADA$ADA.Close) 
+
+fitARIMA <- arima(data.ts, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+library(lmtest)
+coeftest(fitARIMA) 
+
+library("fUnitRoots")
+urkpssTest(train.data.ADA, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(train.data.ADA, differences=1)
+plot(tsstationary)
+
+library("fUnitRoots")
+urkpssTest(test.data.ADA, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(test.data.ADA, differences=1)
+plot(tsstationary)
+
+
+```
+
+Random forest / Times series for Bitcoin
+
+```{r Time Series BTC}
+library(plyr)
+library(readr)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(repr)
+library(data.table)
+library(TTR)
+library(forecast)
+library(lubridate)
+library(tidyverse)
+
+
+glimpse(data.BTC)
+
+data.BTC$year = lubridate::year(index(data.BTC))
+data.BTC$yday = yday(index(data.BTC))
+data.BTC$quarter = quarter(index(data.BTC))
+data.BTC$month = lubridate::month(index(data.BTC))
+data.BTC$day = lubridate::day(index(data.BTC))
+
+glimpse(data.BTC)
+
+
+set.seed(100) 
+
+train.data.BTC = data.BTC[1:165,]
+test.data.BTC = data.BTC[166:205,]
+
+mape <- function(actual,pred){
+  mape <- mean(abs((actual - pred)/actual))*100
+  return (mape)
+}
+
+set.seed(100)
+
+library(randomForest)
+#data.BTC <- na.omit(data.BTC)
+
+
+train.data.BTC <- data.BTC[1:165,]
+test.data.BTC <- data.BTC[166:205,]   
+    
+rf = randomForest( BTC.Close~  BTC.Open + BTC.High + BTC.Low + BTC.Adjusted + year + yday + quarter + month + day, data = train.data.BTC)
+
+print(rf)
+
+
+plot(rf)
+varImpPlot(rf, sort = TRUE, n.var = min(10, nrow(rf$importance)),scale = TRUE)
+
+#Predictions
+
+predictions = predict(rf, newdata = train.data.BTC)
+plot(predictions)
+
+mape(train.data.BTC$BTC.Close, predictions) 
+
+
+predictions = predict(rf, newdata = test.data.BTC)
+mape(test.data.BTC$BTC.Close, predictions)
+
+Acf(
+  train.data.BTC$BTC.Close,
+  lag.max = NULL,
+  type = c("correlation", "covariance", "partial"),
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE
+)
+Pacf(
+  train.data.BTC$BTC.Close,
+  lag.max = NULL,
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE...
+)
+
+data.ts <- as.ts(train.data.BTC$BTC.Close) 
+
+fitARIMA <- arima(data.ts, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+library(lmtest)
+coeftest(fitARIMA) 
+
+library("fUnitRoots")
+urkpssTest(train.data.BTC, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(train.data.BTC, differences=1)
+plot(tsstationary)
+
+library("fUnitRoots")
+urkpssTest(test.data.BTC, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(test.data.BTC, differences=1)
+plot(tsstationary)
+
+
+```
+
+
+Random forest / Times series for ChainLINK
+
+```{r Time Series LINK}
+library(plyr)
+library(readr)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(repr)
+library(data.table)
+library(TTR)
+library(forecast)
+library(lubridate)
+library(tidyverse)
+
+
+glimpse(data.LINK)
+
+data.LINK$year = lubridate::year(index(data.LINK))
+data.LINK$yday = yday(index(data.LINK))
+data.LINK$quarter = quarter(index(data.LINK))
+data.LINK$month = lubridate::month(index(data.LINK))
+data.LINK$day = lubridate::day(index(data.LINK))
+
+glimpse(data.LINK)
+
+
+set.seed(100) 
+
+train.data.LINK = data.LINK[1:165,]
+test.data.LINK = data.LINK[166:205,]
+
+mape <- function(actual,pred){
+  mape <- mean(abs((actual - pred)/actual))*100
+  return (mape)
+}
+
+set.seed(100)
+
+library(randomForest)
+#data.LINK <- na.omit(data.LINK)
+
+
+train.data.LINK <- data.LINK[1:165,]
+test.data.LINK <- data.LINK[166:205,]   
+    
+rf = randomForest( LINK.Close~  LINK.Open + LINK.High + LINK.Low + LINK.Adjusted + year + yday + quarter + month + day, data = train.data.LINK)
+
+print(rf)
+
+
+plot(rf)
+varImpPlot(rf, sort = TRUE, n.var = min(10, nrow(rf$importance)),scale = TRUE)
+
+#Predictions
+
+predictions = predict(rf, newdata = train.data.LINK)
+plot(predictions)
+
+mape(train.data.LINK$LINK.Close, predictions) 
+
+
+predictions = predict(rf, newdata = test.data.LINK)
+mape(test.data.LINK$LINK.Close, predictions)
+
+Acf(
+  train.data.LINK$LINK.Close,
+  lag.max = NULL,
+  type = c("correlation", "covariance", "partial"),
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE
+)
+Pacf(
+  train.data.LINK$LINK.Close,
+  lag.max = NULL,
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE...
+)
+
+data.ts <- as.ts(train.data.LINK$LINK.Close) 
+
+fitARIMA <- arima(data.ts, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+library(lmtest)
+coeftest(fitARIMA) 
+
+library("fUnitRoots")
+urkpssTest(train.data.LINK, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(train.data.LINK, differences=1)
+plot(tsstationary)
+
+library("fUnitRoots")
+urkpssTest(test.data.LINK, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(test.data.LINK, differences=1)
+plot(tsstationary)
+
+
+```
+Random forest / Times series for Polkadot
+
+```{r Time Series DOT}
+library(plyr)
+library(readr)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(repr)
+library(data.table)
+library(TTR)
+library(forecast)
+library(lubridate)
+library(tidyverse)
+
+
+glimpse(data.DOT)
+
+data.DOT$year = lubridate::year(index(data.DOT))
+data.DOT$yday = yday(index(data.DOT))
+data.DOT$quarter = quarter(index(data.DOT))
+data.DOT$month = lubridate::month(index(data.DOT))
+data.DOT$day = lubridate::day(index(data.DOT))
+
+glimpse(data.DOT)
+
+
+set.seed(100) 
+
+train.data.DOT = data.DOT[1:165,]
+test.data.DOT = data.DOT[166:205,]
+
+mape <- function(actual,pred){
+  mape <- mean(abs((actual - pred)/actual))*100
+  return (mape)
+}
+
+set.seed(100)
+
+library(randomForest)
+#data.DOT <- na.omit(data.DOT)
+
+
+train.data.DOT <- data.DOT[1:165,]
+test.data.DOT <- data.DOT[166:205,]   
+    
+rf = randomForest( DOT.Close~  DOT.Open + DOT.High + DOT.Low + DOT.Adjusted + year + yday + quarter + month + day, data = train.data.DOT)
+
+print(rf)
+
+
+plot(rf)
+varImpPlot(rf, sort = TRUE, n.var = min(10, nrow(rf$importance)),scale = TRUE)
+
+#Predictions
+
+predictions = predict(rf, newdata = train.data.DOT)
+plot(predictions)
+
+mape(train.data.DOT$DOT.Close, predictions) 
+
+
+predictions = predict(rf, newdata = test.data.DOT)
+mape(test.data.DOT$DOT.Close, predictions)
+
+Acf(
+  train.data.DOT$DOT.Close,
+  lag.max = NULL,
+  type = c("correlation", "covariance", "partial"),
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE
+)
+Pacf(
+  train.data.DOT$DOT.Close,
+  lag.max = NULL,
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE...
+)
+
+data.ts <- as.ts(train.data.DOT$DOT.Close) 
+
+fitARIMA <- arima(data.ts, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+library(lmtest)
+coeftest(fitARIMA) 
+
+library("fUnitRoots")
+urkpssTest(train.data.DOT, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(train.data.DOT, differences=1)
+plot(tsstationary)
+
+library("fUnitRoots")
+urkpssTest(test.data.DOT, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(test.data.DOT, differences=1)
+plot(tsstationary)
+
+
+```
+Random forest / Times series for Solana
+
+
+```{r Time Series SOL}
+library(plyr)
+library(readr)
+library(dplyr)
+library(caret)
+library(ggplot2)
+library(repr)
+library(data.table)
+library(TTR)
+library(forecast)
+library(lubridate)
+library(tidyverse)
+
+
+glimpse(data.SOL)
+
+data.SOL$year = lubridate::year(index(data.SOL))
+data.SOL$yday = yday(index(data.SOL))
+data.SOL$quarter = quarter(index(data.SOL))
+data.SOL$month = lubridate::month(index(data.SOL))
+data.SOL$day = lubridate::day(index(data.SOL))
+
+glimpse(data.SOL)
+
+
+set.seed(100) 
+
+train.data.SOL = data.SOL[1:165,]
+test.data.SOL = data.SOL[166:205,]
+
+mape <- function(actual,pred){
+  mape <- mean(abs((actual - pred)/actual))*100
+  return (mape)
+}
+
+set.seed(100)
+
+library(randomForest)
+#data.SOL <- na.omit(data.SOL)
+
+
+train.data.SOL <- data.SOL[1:165,]
+test.data.SOL <- data.SOL[166:205,]   
+    
+rf = randomForest( SOL.Close~  SOL.Open + SOL.High + SOL.Low + SOL.Adjusted + year + yday + quarter + month + day, data = train.data.SOL)
+
+print(rf)
+
+
+plot(rf)
+varImpPlot(rf, sort = TRUE, n.var = min(10, nrow(rf$importance)),scale = TRUE)
+
+#Predictions
+
+predictions = predict(rf, newdata = train.data.SOL)
+plot(predictions)
+
+mape(train.data.SOL$SOL.Close, predictions) 
+
+
+predictions = predict(rf, newdata = test.data.SOL)
+mape(test.data.SOL$SOL.Close, predictions)
+
+Acf(
+  train.data.SOL$SOL.Close,
+  lag.max = NULL,
+  type = c("correlation", "covariance", "partial"),
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE
+)
+Pacf(
+  train.data.SOL$SOL.Close,
+  lag.max = NULL,
+  plot = TRUE,
+  na.action = na.contiguous,
+  demean = TRUE...
+)
+
+data.ts <- as.ts(train.data.SOL$SOL.Close) 
+
+fitARIMA <- arima(data.ts, order=c(1,1,1),seasonal = list(order = c(1,0,0), period = 12),method="ML")
+library(lmtest)
+coeftest(fitARIMA) 
+
+library("fUnitRoots")
+urkpssTest(train.data.SOL, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(train.data.SOL, differences=1)
+plot(tsstationary)
+
+library("fUnitRoots")
+urkpssTest(test.data.SOL, type = c("tau"), lags = c("short"),use.lag = NULL, doplot = TRUE)
+tsstationary = diff(test.data.SOL, differences=1)
+plot(tsstationary)
+
+
+```
